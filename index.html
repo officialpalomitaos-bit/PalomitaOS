@@ -1,0 +1,1788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PalomitaOS v2.2.1 Compact Edition</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #0c0c0f;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #ffffff;
+            overflow: hidden;
+            padding: 10px;
+        }
+
+        /* Container allowing physical keys to sit alongside the chassis */
+        .device-container {
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+
+        /* Physical Side Keys Chassis Mounts */
+        .hardware-side-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-right: -4px;
+            position: relative;
+            z-index: 5;
+        }
+
+        .hw-btn {
+            width: 6px;
+            background: linear-gradient(to right, #2a2a2f, #151518);
+            border-radius: 4px 0 0 4px;
+            cursor: pointer;
+            border: 1px solid #3a3a40;
+            border-right: none;
+            box-shadow: -2px 4px 10px rgba(0,0,0,0.5);
+            transition: transform 0.05s ease;
+        }
+        .hw-btn:active {
+            transform: translateX(2px);
+        }
+        .hw-vol-up, .hw-vol-down { height: 50px; }
+
+        /* --- Phone Frame Canvas Container (Shortened Height) --- */
+        .phone-wrapper {
+            width: 100%;
+            max-width: 390px;
+            height: 670px; /* Reduced from 780px for a better aspect ratio */
+            background: #0a0a0d;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            border-radius: 40px;
+            border: 10px solid #1a1a19;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.9);
+            overflow: hidden;
+            z-index: 10;
+        }
+
+        .screen-canvas {
+            flex: 1;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: #000;
+        }
+
+        /* --- HARDWARE RECOVERY LAYER --- */
+        .recovery-panel {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #000000;
+            z-index: 350;
+            display: none;
+            flex-direction: column;
+            padding: 30px 20px;
+            font-family: monospace;
+            color: #34c759;
+        }
+        .recovery-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #34c759;
+            text-shadow: 0 0 4px rgba(52,199,89,0.6);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+        .recovery-subtitle {
+            font-size: 11px;
+            color: #2ea84b;
+            margin-bottom: 25px;
+            border-bottom: 1px dashed #34c759;
+            padding-bottom: 8px;
+        }
+        .recovery-list-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+        .recovery-option-row {
+            padding: 12px;
+            border: 1px solid transparent;
+            font-size: 13px;
+        }
+        .recovery-option-row.active-selection {
+            background: #112915;
+            border: 1px solid #34c759;
+            color: #fff;
+            text-shadow: 0 0 4px rgba(255,255,255,0.5);
+        }
+        .recovery-instructions-box {
+            margin-top: auto;
+            background: #09140b;
+            border: 1px solid #1a3d21;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            line-height: 1.5;
+            color: #2ea84b;
+        }
+
+        /* --- Animated Modern Boot Panel --- */
+        .boot-panel {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #050508;
+            z-index: 300;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            transition: opacity 0.5s ease;
+        }
+
+        .boot-logo-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .boot-icon {
+            font-size: 54px;
+            animation: pulse 1.5s ease-in-out infinite alternate;
+        }
+
+        .boot-title {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: 3px;
+            background: linear-gradient(45deg, #00e5ff, #7a00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+        }
+
+        .boot-version {
+            font-size: 14px;
+            font-weight: 600;
+            color: #ff9500;
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+        }
+
+        .boot-progress-container {
+            width: 80%;
+            height: 6px;
+            background: #1c1c24;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .boot-progress-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #00e5ff, #7a00ff);
+            border-radius: 10px;
+            transition: width 0.1s linear;
+        }
+
+        .boot-status-text {
+            font-family: monospace;
+            font-size: 11px;
+            color: #888;
+            text-align: center;
+            height: 15px;
+        }
+
+        /* --- SWIPE UP TO UNLOCK LOCKSCREEN LAYER --- */
+        .swipe-lockscreen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, #111118, #050508);
+            z-index: 260;
+            display: none;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 40px 20px 30px 20px;
+            transition: transform 0.4s cubic-bezier(0.1, 0.8, 0.3, 1);
+            cursor: grab;
+        }
+        .swipe-lockscreen:active { cursor: grabbing; }
+
+        .swipe-clock-area { text-align: center; }
+        .swipe-time { font-size: 54px; font-weight: 200; color: #fff; }
+        .swipe-date { font-size: 16px; color: #888; margin-top: 5px; }
+
+        .swipe-chevron-hint {
+            text-align: center;
+            animation: bounceSwipe 2s infinite;
+            color: #00e5ff;
+        }
+        .swipe-chevron-hint i { font-size: 28px; }
+        .swipe-hint-text { font-size: 13px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; margin-top: 10px; }
+
+        /* --- SECURITY PIN ENTRY PANEL --- */
+        .lockscreen-panel {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #0f0f14;
+            z-index: 250;
+            display: none;
+            flex-direction: column;
+            padding: 20px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .lock-title { font-size: 20px; font-weight: bold; margin-bottom: 6px; text-align: center; }
+        .lock-subtitle { font-size: 12px; color: #888; margin-bottom: 5px; text-align: center; }
+
+        .lock-display {
+            background: #000;
+            width: 80%;
+            height: 44px;
+            border-radius: 12px;
+            border: 1px solid #222;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            letter-spacing: 5px;
+            font-family: monospace;
+        }
+
+        .lock-grid-pad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            width: 85%;
+            margin-bottom: 15px;
+        }
+
+        .lock-key {
+            background: #1c1c24;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .lock-key:active { background: #333; }
+        .lock-action-row { display: flex; flex-direction: column; gap: 8px; width: 85%; }
+
+        /* --- Top Status Bar Line --- */
+        .status-bar-row {
+            height: 28px;
+            padding: 0 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            z-index: 10;
+            background: rgba(0,0,0,0.2);
+        }
+        .status-right i { margin-left: 6px; }
+
+        /* --- Home Workspace Desktop --- */
+        .desktop-environment {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(135deg, #7a00ff 0%, #00e5ff 100%);
+            background-size: cover;
+            background-position: center;
+            padding: 16px;
+            position: relative;
+        }
+
+        /* HTC Inspired Widget Panel */
+        .htc-clock-widget { margin: 5px auto; text-align: center; width: 100%; }
+        .flip-card-container { display: flex; justify-content: center; gap: 10px; margin-bottom: 4px; }
+        
+        .time-card-block {
+            background: #111116;
+            border-radius: 12px;
+            font-size: 42px;
+            font-weight: bold;
+            font-family: monospace;
+            padding: 4px 12px;
+            min-width: 75px;
+            color: #fff;
+            border: 1px solid #222;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+        }
+
+        .clock-subtext-label {
+            font-size: 10px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            background: linear-gradient(45deg, #00e5ff, #7a00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* --- App System Layout Matrix --- */
+        .app-workspace-layout { display: flex; flex-direction: column; gap: 20px; margin-top: 10px; padding: 0 5px; overflow-y: auto; max-height: 380px; }
+        .app-grid-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px 10px; }
+        
+        .app-node-element { display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative; }
+        .app-icon-plate {
+            width: 50px;
+            height: 50px;
+            border-radius: 14px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            color: #fff;
+            margin-bottom: 4px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: transform 0.1s ease;
+        }
+        .app-node-element:active .app-icon-plate { transform: scale(0.9); }
+
+        .app-text-title {
+            font-size: 11px;
+            text-align: center;
+            color: #fff;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+            white-space: nowrap;
+        }
+
+        /* Brand Colors */
+        .bg-phone { background: linear-gradient(135deg, #4cd964, #28a745); }
+        .bg-messages { background: linear-gradient(135deg, #007aff, #0056b3); }
+        .bg-browser { background: linear-gradient(135deg, #147efb, #5fc3e4); }
+        .bg-kernel { background: linear-gradient(135deg, #ff3b30, #b31e15); }
+        .bg-settings { background: linear-gradient(135deg, #8e8e93, #545456); }
+        .bg-appstore { background: linear-gradient(135deg, #00a2ff, #0044ff); }
+        .bg-music { background: linear-gradient(135deg, #ff2d55, #ff6b8b); }
+
+        /* --- Native Navigation Bar Row --- */
+        .classic-five-navbar {
+            height: 54px;
+            background: #0a0a0d;
+            border-top: 1px solid #1c1c24;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0 5px;
+            z-index: 110;
+        }
+
+        .nav-btn-node { color: #666675; font-size: 16px; cursor: pointer; padding: 12px; }
+        .nav-btn-node:active, .nav-btn-node.active { color: #ffffff; }
+        .nav-btn-node.power-btn { color: #ff3b30; }
+
+        /* --- Modals Overlay Screens --- */
+        .app-window-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #0f0f14;
+            z-index: 150;
+            display: none;
+            flex-direction: column;
+        }
+
+        .app-window-header {
+            height: 46px;
+            padding: 0 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #16161f;
+            border-bottom: 1px solid #222230;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .app-window-header i { cursor: pointer; padding: 6px; }
+        .app-window-body { flex: 1; padding: 14px; overflow-y: auto; display: flex; flex-direction: column; }
+
+        .notification-toast-banner {
+            position: absolute;
+            bottom: 16px; left: 16px; right: 16px;
+            background: rgba(18, 18, 24, 0.95);
+            border-left: 4px solid #00e5ff;
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 12px;
+            z-index: 180;
+            display: none;
+        }
+
+        /* Control Panel Center Overlay */
+        .system-control-modal {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 170;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .control-panel-box {
+            background: #14141a;
+            border-radius: 20px;
+            width: 100%;
+            padding: 20px;
+            border: 1px solid #282836;
+        }
+
+        .control-panel-title { font-size: 12px; font-weight: bold; color: #777; text-align: center; text-transform: uppercase; margin-bottom: 20px; }
+        .control-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; }
+
+        .control-btn {
+            background: #1e1e29;
+            border: 1px solid #2d2d3d;
+            border-radius: 12px;
+            padding: 14px 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            color: #fff;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .control-cancel-row { border-top: 1px solid #222230; padding-top: 14px; text-align: center; color: #ff3b30; font-size: 14px; font-weight: bold; cursor: pointer; }
+
+        /* Dialer Application Content */
+        .dialer-screen-output {
+            background: #000;
+            height: 45px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            font-size: 22px;
+            font-family: monospace;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 14px;
+            border: 1px solid #222;
+        }
+        .dialer-grid-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+        .dialer-key { background: #1c1c24; border-radius: 12px; height: 46px; display: flex; justify-content: center; align-items: center; font-size: 20px; cursor: pointer; }
+        .dial-action-container { display: flex; justify-content: center; width: 100%; margin-top: 5px; }
+        .phone-call-trigger-btn { width: 52px; height: 52px; background: #28a745; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 20px; color: #fff; cursor: pointer; border: none; box-shadow: 0 4px 15px rgba(40,167,69,0.4); }
+        .phone-call-trigger-btn.active-call { background: #ff3b30; animation: pulseCall 1.5s infinite; }
+        
+        @keyframes pulseCall { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+        /* Live Call Overlay Screen */
+        .active-call-overlay { display: none; flex-direction: column; align-items: center; justify-content: space-between; height: 100%; text-align: center; padding: 30px 0; }
+        .call-avatar { width: 80px; height: 80px; background: #222; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 32px; margin: 0 auto 15px; border: 2px solid #28a745; }
+
+        /* Browser Frame Elements */
+        .browser-iframe-viewport { flex: 1; border: none; width: 100%; background: #fff; border-radius: 12px; display: block; }
+
+        /* Music Application Content */
+        .music-player-hero { background: #1c1c24; border-radius: 16px; padding: 12px; text-align: center; margin-bottom: 15px; position: relative; overflow: hidden; }
+        .music-vinyl { width: 100px; height: 100px; border-radius: 50%; background: radial-gradient(circle, #333 20%, #111 21%, #111 100%); margin: 0 auto 10px; border: 4px solid #2d2d3d; display: flex; justify-content: center; align-items: center; animation: spin 4s linear infinite; animation-play-state: paused; }
+        .music-vinyl-center { width: 24px; height: 24px; background: #ff2d55; border-radius: 50%; }
+        .music-track-list { display: flex; flex-direction: column; gap: 8px; margin-top: 5px; }
+        .music-track-item { background: #16161f; border: 1px solid #222230; padding: 10px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .music-track-item.playing { border-color: #ff2d55; background: #1f1418; }
+
+        /* App Store Elements */
+        .store-hero-card { background: linear-gradient(135deg, #0044ff, #00c6ff); padding: 14px; border-radius: 16px; margin-bottom: 15px; position: relative; }
+        .store-app-item { display: flex; align-items: center; justify-content: space-between; background: #16161f; padding: 10px; border-radius: 12px; border: 1px solid #222230; margin-bottom: 8px; }
+        .store-app-details { display: flex; align-items: center; gap: 10px; }
+        .store-app-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; justify-content: center; align-items: center; font-size: 16px; color: #fff; }
+        .store-download-btn { background: #007aff; color: #fff; border: none; padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 11px; cursor: pointer; }
+        .store-download-btn.installed { background: #222; color: #888; cursor: default; }
+
+        /* Chat view */
+        .chat-view-container { display: flex; flex-direction: column; height: 100%; }
+        .chat-log-timeline { flex: 1; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
+        .chat-bubble { max-width: 80%; padding: 8px 12px; border-radius: 16px; font-size: 13px; }
+        .chat-bubble.bot { background: #1c1c24; align-self: flex-start; }
+        .chat-bubble.user { background: #007aff; align-self: flex-end; }
+        .chat-input-row { display: flex; gap: 8px; padding-top: 10px; }
+        .chat-text-field { flex: 1; background: #1c1c24; border: 1px solid #2d2d3d; border-radius: 12px; padding: 8px; color: #fff; outline: none; }
+
+        /* Settings Subcards styling */
+        .settings-section-card { background: #14141a; border-radius: 16px; padding: 12px; margin-bottom: 12px; border: 1px solid #222230; }
+        .settings-section-card h3 { font-size: 11px; color: #00e5ff; text-transform: uppercase; margin-bottom: 10px; }
+        .settings-select-dropdown { background: #1c1c24; color: #fff; border: 1px solid #2d2d3d; padding: 6px; border-radius: 8px; width: 65%; outline: none; font-size: 12px; }
+        .settings-action-btn { background: #00e5ff; color: #000; border: none; padding: 8px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 12px; }
+        .settings-grid-thumbs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; max-height: 120px; overflow-y: auto; padding-right: 4px; }
+        
+        .thumb-wallpaper-node { height: 50px; border-radius: 8px; border: 2px solid transparent; cursor: pointer; background-size: cover; background-position: center; }
+        .thumb-wallpaper-node.selected { border-color: #00e5ff; }
+        .kernel-pot-trigger { width: 80px; height: 80px; background: #22222e; border: 3px solid #333344; border-radius: 10px 10px 30px 30px; cursor: pointer; margin: 15px auto; }
+
+        /* Toggle Switches */
+        .toggle-switch-container { display: flex; justify-content: space-between; align-items: center; margin-top: 3px; }
+        .switch-label-desc { font-size: 13px; color: #ccc; }
+        .switch-input-element { cursor: pointer; width: 44px; height: 24px; background: #333; display: block; border-radius: 100px; position: relative; border: 1px solid #444; }
+        .switch-input-element::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; background: #fff; border-radius: 90px; transition: 0.2s; }
+        .switch-checkbox { display: none; }
+        .switch-checkbox:checked + .switch-input-element { background: #00e5ff; border-color: #00bfff; }
+        .switch-checkbox:checked + .switch-input-element::after { left: calc(100% - 2px); transform: translateX(-100%); }
+
+        /* Keyframes Structural Engines */
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes pulse { 0% { transform: scale(0.9); opacity: 0.6; } 100% { transform: scale(1.1); opacity: 1; } }
+        @keyframes bounceSwipe { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-12px); } 60% { transform: translateY(-6px); } }
+    </style>
+</head>
+<body>
+
+    <div class="device-container">
+        <div class="hardware-side-buttons">
+            <div class="hw-btn hw-vol-up" title="Volume Up" onclick="handleHardwareVolumeUp()"></div>
+            <div class="hw-btn hw-vol-down" title="Volume Down" onclick="handleHardwareVolumeDown()"></div>
+        </div>
+
+        <div class="phone-wrapper">
+            <div class="screen-canvas">
+                
+                <div class="recovery-panel" id="recoveryMenuOverlay">
+                    <div class="recovery-title">Palomita Recovery Menu</div>
+                    <div class="recovery-subtitle">Hardware Vol +/- to Move • Bottom Power Button to Select</div>
+                    
+                    <div class="recovery-list-menu">
+                        <div class="recovery-option-row active-selection" id="recOpt0">1. Reboot System Normally</div>
+                        <div class="recovery-option-row" id="recOpt1">2. Wipe Device Storage (Factory Reset)</div>
+                        <div class="recovery-option-row" id="recOpt2">3. Purge Local PIN Passcode Lock</div>
+                    </div>
+
+                    <div class="recovery-instructions-box">
+                        <strong>Hardware Mapping Controller:</strong><br>
+                        • Click or tap physical side keys to move. Use the red software power button down in the dock to select.
+                    </div>
+                </div>
+
+                <div class="boot-panel" id="bootPanelEngine">
+                    <div class="boot-logo-container">
+                        <div class="boot-icon">🍿</div>
+                    </div>
+                    <div class="boot-title">PALOMITAOS</div>
+                    <div class="boot-version">Version 2.2.1 HW</div>
+                    <div class="boot-progress-container">
+                        <div class="boot-progress-bar" id="bootProgressBarNode"></div>
+                    </div>
+                    <div class="boot-status-text" id="bootLoadingStatusText">Initializing Core Hardware... 0%</div>
+                </div>
+
+                <div class="swipe-lockscreen" id="gestureSwipeScreenLayer">
+                    <div class="swipe-clock-area">
+                        <div class="swipe-time" id="lockScreenClock">00:00</div>
+                        <div class="swipe-date" id="lockScreenDate">Friday, June 5</div>
+                    </div>
+                    
+                    <div class="swipe-chevron-hint">
+                        <i class="fas fa-chevron-up"></i>
+                        <div class="swipe-hint-text">Swipe up to unlock</div>
+                    </div>
+                </div>
+
+                <div class="lockscreen-panel" id="deviceLockscreenLayer">
+                    <div class="lock-title" id="lockScreenHeaderLabel">Initialize Password Configuration</div>
+                    <div class="lock-subtitle" id="lockScreenSubtextLabel">Configure your numeric credential passcode.</div>
+                    <div class="lock-display" id="lockInputDisplay"></div>
+                    
+                    <div class="lock-grid-pad">
+                        <div class="lock-key" onclick="appendLockDigit('1')">1</div>
+                        <div class="lock-key" onclick="appendLockDigit('2')">2</div>
+                        <div class="lock-key" onclick="appendLockDigit('3')">3</div>
+                        <div class="lock-key" onclick="appendLockDigit('4')">4</div>
+                        <div class="lock-key" onclick="appendLockDigit('5')">5</div>
+                        <div class="lock-key" onclick="appendLockDigit('6')">6</div>
+                        <div class="lock-key" onclick="appendLockDigit('7')">7</div>
+                        <div class="lock-key" onclick="appendLockDigit('8')">8</div>
+                        <div class="lock-key" onclick="appendLockDigit('9')">9</div>
+                        <div class="lock-key" style="background:transparent;"></div>
+                        <div class="lock-key" onclick="appendLockDigit('0')">0</div>
+                        <div class="lock-key" style="color:#ff3b30;" onclick="clearLockField()"><i class="fas fa-backspace"></i></div>
+                    </div>
+
+                    <div class="lock-action-row">
+                        <button class="settings-action-btn" style="width:100%;" onclick="submitLockPasscodeSequence()">Confirm Action</button>
+                        <button class="settings-action-btn" id="noPasswordToggleBtn" style="width:100%; background:#222; color:#fff;" onclick="skipPasswordConfiguration()">Select No Password Route</button>
+                        <button class="settings-action-btn" style="width:100%; background:#331111; color:#ff3b30; border: 1px solid #551111; font-size:11px;" onclick="triggerRecoveryTerminalBoot()">Boot Recovery Terminal</button>
+                    </div>
+                </div>
+
+                <div class="desktop-environment" id="systemDesktopInterface">
+                    
+                    <div class="status-bar-row">
+                        <span id="topSystemClockLabel">00:00</span>
+                        <div class="status-right">
+                            <i class="fas fa-wifi"></i>
+                            <i class="fas fa-signal"></i>
+                            <i class="fas fa-battery-three-quarters"></i>
+                        </div>
+                    </div>
+
+                    <div class="htc-clock-widget">
+                        <div class="flip-card-container">
+                            <div class="time-card-block" id="htcClockHour">00</div>
+                            <div class="time-card-block" id="htcClockMinute">00</div>
+                        </div>
+                        <div class="clock-subtext-label" id="htcClockAmPmLabel">Palomita Core v2.2.1</div>
+                    </div>
+
+                    <div class="notification-toast-banner" id="globalToastBanner">
+                        <span id="toastBannerMessage">Notification</span>
+                    </div>
+
+                    <div class="app-workspace-layout">
+                        <div class="app-grid-row">
+                            <div class="app-node-element" onclick="openModalApp('appModalPhone')">
+                                <div class="app-icon-plate bg-phone"><i class="fas fa-phone"></i></div>
+                                <span class="app-text-title">Phone</span>
+                            </div>
+                            <div class="app-node-element" onclick="openModalApp('appModalMessages')">
+                                <div class="app-icon-plate bg-messages"><i class="fas fa-comment-alt"></i></div>
+                                <span class="app-text-title">Messages</span>
+                            </div>
+                            <div class="app-node-element" onclick="openModalApp('appModalBrowser')">
+                                <div class="app-icon-plate bg-browser"><i class="fas fa-globe"></i></div>
+                                <span class="app-text-title">Browser</span>
+                            </div>
+                            <div class="app-node-element" onclick="openModalApp('appModalMusic')">
+                                <div class="app-icon-plate bg-music"><i class="fas fa-music"></i></div>
+                                <span class="app-text-title">Music</span>
+                            </div>
+                            <div class="app-node-element" onclick="openModalApp('appModalAppStore')">
+                                <div class="app-icon-plate bg-appstore"><i class="fas fa-store"></i></div>
+                                <span class="app-text-title">App Store</span>
+                            </div>
+                            <div class="app-node-element" onclick="openModalApp('appModalKernel')">
+                                <div class="app-icon-plate bg-kernel"><i class="fas fa-fire"></i></div>
+                                <span class="app-text-title">Kernel Lab</span>
+                            </div>
+                            <div class="app-node-element" onclick="openModalApp('appModalSettings')">
+                                <div class="app-icon-plate bg-settings"><i class="fas fa-cog"></i></div>
+                                <span class="app-text-title">Settings</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="system-control-modal" id="sysControlOverlay">
+                    <div class="control-panel-box">
+                        <div class="control-panel-title">System Control Panel</div>
+                        <div class="control-grid">
+                            <div class="control-btn" onclick="triggerSystemResetSequence('reboot')">
+                                <i class="fas fa-sync-alt" style="color:#007aff;"></i><span>Reboot</span>
+                            </div>
+                            <div class="control-btn" onclick="lockDeviceManually()">
+                                <i class="fas fa-lock" style="color:#ff3b30;"></i><span>Lock Screen</span>
+                            </div>
+                            <div class="control-btn" onclick="closeControlOverlay(); openModalApp('appModalSettings');">
+                                <i class="fas fa-images" style="color:#8e8e93;"></i><span>Settings</span>
+                            </div>
+                            <div class="control-btn" onclick="openModalApp('appModalVirus')">
+                                <i class="fas fa-shield-virus" style="color:#af52de;"></i><span>Virus Scan</span>
+                            </div>
+                        </div>
+                        <div class="control-cancel-row" onclick="closeControlOverlay()">Cancel</div>
+                    </div>
+                </div>
+
+                <div class="app-window-overlay" id="appModalPhone">
+                    <div class="app-window-header"><span>Phone Terminal</span><i class="fas fa-times" onclick="closeActiveModal('appModalPhone')"></i></div>
+                    <div class="app-window-body" id="phoneAppPrimaryBody">
+                        <div class="dialer-screen-output">
+                            <span id="dialerTextDigits"></span>
+                            <i class="fas fa-bell" onclick="triggerIncomingChimeAlert()" style="color: #00e5ff; cursor: pointer; font-size: 16px;"></i>
+                        </div>
+                        <div class="dialer-grid-pad">
+                            <div class="dialer-key" onclick="appendDialDigit('1')">1</div>
+                            <div class="dialer-key" onclick="appendDialDigit('2')">2</div>
+                            <div class="dialer-key" onclick="appendDialDigit('3')">3</div>
+                            <div class="dialer-key" onclick="appendDialDigit('4')">4</div>
+                            <div class="dialer-key" onclick="appendDialDigit('5')">5</div>
+                            <div class="dialer-key" onclick="appendDialDigit('6')">6</div>
+                            <div class="dialer-key" onclick="appendDialDigit('7')">7</div>
+                            <div class="dialer-key" onclick="appendDialDigit('8')">8</div>
+                            <div class="dialer-key" onclick="appendDialDigit('9')">9</div>
+                            <div class="dialer-key" onclick="appendDialDigit('*')">*</div>
+                            <div class="dialer-key" onclick="appendDialDigit('0')">0</div>
+                            <div class="dialer-key" style="color: #ff3b30;" onclick="clearDialField()"><i class="fas fa-backspace"></i></div>
+                        </div>
+                        <div class="dial-action-container">
+                            <button class="phone-call-trigger-btn" onclick="executeDialedCallSequence()"><i class="fas fa-phone"></i></button>
+                        </div>
+                    </div>
+                    <div class="active-call-overlay" id="phoneActiveCallOverlay">
+                        <div>
+                            <div class="call-avatar"><i class="fas fa-user" style="color: #fff;"></i></div>
+                            <h2 id="activeCallTargetNumber" style="font-weight: 300; margin-bottom: 8px;">Unknown Number</h2>
+                            <p id="activeCallStatusLabel" style="color: #ff9500; font-size: 14px; letter-spacing: 1px;">DIALING...</p>
+                        </div>
+                        <button class="phone-call-trigger-btn active-call" onclick="terminateCurrentCallSequence()"><i class="fas fa-phone-slash"></i></button>
+                    </div>
+                </div>
+
+                <div class="app-window-overlay" id="appModalBrowser">
+                    <div class="app-window-header"><span>Browser Engine</span><i class="fas fa-times" onclick="closeActiveModal('appModalBrowser')"></i></div>
+                    <div style="display: flex; gap: 8px; padding: 10px; background: #16161f; border-bottom: 1px solid #222230;">
+                        <input type="text" class="chat-text-field" id="browserUrlField" value="https://wikipedia.org">
+                        <button class="settings-action-btn" onclick="launchLiveWebQuery()">Go</button>
+                    </div>
+                    <div class="app-window-body" style="padding: 0; background: #fff;">
+                        <iframe id="liveBrowserIframe" class="browser-iframe-viewport" src="https://wikipedia.org"></iframe>
+                    </div>
+                </div>
+
+                <div class="app-window-overlay" id="appModalMusic">
+                    <div class="app-window-header"><span>Palomita Music</span><i class="fas fa-times" onclick="closeActiveModal('appModalMusic')"></i></div>
+                    <div class="app-window-body">
+                        <div class="music-player-hero">
+                            <div class="music-vinyl" id="musicPlayerVinylDisc"><div class="music-vinyl-center"></div></div>
+                            <h3 id="currentPlayingTrackTitle" style="margin-bottom: 4px;">Select a track</h3>
+                            <p id="currentPlayingTrackArtist" style="color: #ff2d55; font-size: 13px;">Artist</p>
+                        </div>
+                        <h3 style="font-size: 14px; color: #888; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">Artist Catalogue</h3>
+                        <div class="music-track-list" id="musicSystemTracklistContainer"></div>
+                    </div>
+                </div>
+
+                <div class="app-window-overlay" id="appModalAppStore">
+                    <div class="app-window-header"><span>App Store</span><i class="fas fa-times" onclick="closeActiveModal('appModalAppStore')"></i></div>
+                    <div class="app-window-body">
+                        <div class="store-hero-card">
+                            <h2 style="font-weight: 800; margin-bottom: 4px;">Exclusive Ecosystem</h2>
+                            <p style="font-size: 13px; opacity: 0.9;">Expand Palomita OS sandbox architecture modules instantly.</p>
+                        </div>
+                        <h3 style="font-size: 14px; color: #888; margin-bottom: 12px; text-transform: uppercase;">Trending Extensions</h3>
+                        
+                        <div class="store-app-item">
+                            <div class="store-app-details">
+                                <div class="store-app-icon" style="background: linear-gradient(135deg,#ff9500,#ff5e00);"><i class="fas fa-calculator"></i></div>
+                                <div>
+                                    <h4 style="font-size:14px;">Palomita Calc</h4>
+                                    <p style="font-size:11px; color:#666;">Ecosystem tool utilities</p>
+                                </div>
+                            </div>
+                            <button class="store-download-btn" id="btnAppStoreCalc" onclick="simulateAppStoreInstallation('Calc', 'btnAppStoreCalc')">Get</button>
+                        </div>
+
+                        <div class="store-app-item">
+                            <div class="store-app-details">
+                                <div class="store-app-icon" style="background: linear-gradient(135deg,#af52de,#7a00ff);"><i class="fas fa-gamepad"></i></div>
+                                <div>
+                                    <h4 style="font-size:14px;">Retro Dash Arcade</h4>
+                                    <p style="font-size:11px; color:#666;">8-Bit performance platformer</p>
+                                </div>
+                            </div>
+                            <button class="store-download-btn" id="btnAppStoreDash" onclick="simulateAppStoreInstallation('Dash', 'btnAppStoreDash')">Get</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="app-window-overlay" id="appModalMessages">
+                    <div class="app-window-header"><span>Messages</span><i class="fas fa-times" onclick="closeActiveModal('appModalMessages')"></i></div>
+                    <div class="app-window-body">
+                        <div class="chat-view-container">
+                            <div class="chat-log-timeline" id="chatTimelineFlow">
+                                <div class="chat-bubble bot">Automated Node Active. Drop a line to test network connectivity.</div>
+                            </div>
+                            <div class="chat-input-row">
+                                <input type="text" class="chat-text-field" id="chatInputMessageNode" placeholder="Message Field" onkeydown="if(event.key==='Enter') executeChatMessageRoute()">
+                                <button class="settings-action-btn" onclick="executeChatMessageRoute()"><i class="fas fa-arrow-up"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="app-window-overlay" id="appModalKernel">
+                    <div class="app-window-header"><span>Kernel Mini-Lab</span><i class="fas fa-times" onclick="closeActiveModal('appModalKernel')"></i></div>
+                    <div class="app-window-body" style="text-align:center;">
+                        <div class="kernel-pot-trigger" onclick="incrementKernelCounterScore()"></div>
+                        <h3 id="kernelScoreBoardText" style="font-family: monospace; color: #00e5ff;">Score: 0</h3>
+                    </div>
+                </div>
+
+                <div class="app-window-overlay" id="appModalVirus">
+                    <div class="app-window-header"><span>Virus Scan</span><i class="fas fa-times" onclick="closeActiveModal('appModalVirus')"></i></div>
+                    <div class="app-window-body">
+                        <button class="settings-action-btn" style="width:100%; margin-bottom:15px;" onclick="runSecurityCoreDiagnosticsCheck()">Scan Blocks</button>
+                        <div id="virusTerminalOutputLog" style="background:#000; padding:10px; font-family:monospace; font-size:11px; height:120px; border:1px solid #222; color:#888;">Ready...</div>
+                    </div>
+                </div>
+
+                <div class="app-window-overlay" id="appModalSettings">
+                    <div class="app-window-header"><span>Settings Hub</span><i class="fas fa-times" onclick="closeActiveModal('appModalSettings')"></i></div>
+                    <div class="app-window-body">
+                        
+                        <div class="settings-section-card">
+                            <h3>Time & Interface</h3>
+                            <div class="toggle-switch-container">
+                                <span class="switch-label-desc">Use 12-Hour Clock Format</span>
+                                <label style="display:inline-block;">
+                                    <input type="checkbox" class="switch-checkbox" id="clockFormatModeCheckbox" onchange="toggleClockLayoutFormat()">
+                                    <span class="switch-input-element"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="settings-section-card">
+                            <h3>Dynamic Theme Sync</h3>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <p style="font-size: 11px; color: #aaa;">Generates harmonic soundscapes tailored to the aesthetics of your selected wallpaper layout context.</p>
+                                <button class="settings-action-btn" style="width: 100%;" onclick="runAdaptiveAudioThemeSync()">Analyze & Sync Frequencies</button>
+                            </div>
+                        </div>
+
+                        <div class="settings-section-card">
+                            <h3>Password & Security</h3>
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <div id="settingsSecurityStatusLabel" style="font-size: 13px; color: #ccc;">Status: Checking system database...</div>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="settings-action-btn" style="background: #ff3b30; color: #fff;" onclick="resetPasswordFromSettings()">Change / Reset PIN</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-section-card">
+                            <h3>Audio Engineering</h3>
+                            <div style="display: flex; gap: 8px;">
+                                <select class="settings-select-dropdown" id="ringtoneListSelectorMenu" onchange="saveRingtoneSelection()">
+                                    <option value="0">1. Palomita Main Theme (High Arpeggio)</option>
+                                    <option value="1">2. Marimba Pop Remix (Mid Octave Staccato)</option>
+                                    <option value="2">3. Kernel Burst Synth (Sawtooth Alert)</option>
+                                    <option value="3">4. Digital Arpeggiator (Cascade Drop)</option>
+                                    <option value="4">5. Cyber Warning Siren (Alternating Harmonics)</option>
+                                    <option value="5">6. Minimalist Beep Code (High Frequency Radar)</option>
+                                    <option value="6">7. Retro Chiptune Arc (8-Bit Rise)</option>
+                                    <option value="7">8. Synthwave Horizon (Deep Bass Resonance)</option>
+                                    <option value="8">9. Ambient Cloudscape (Wide Harmony Pads)</option>
+                                    <option value="9">10. Quartz Echo Pulse (Crystal Detune)</option>
+                                    <option value="10">11. Velocity Spark (Glitch Double Step)</option>
+                                    <option value="11">12. Hologram Matrix (Microtonal Wave)</option>
+                                    <option value="12">13. Celestial Drift (Diminished Sweep)</option>
+                                    <option value="13">14. Neon Overdrive (Industrial Square Wave)</option>
+                                    <option value="14">15. Subsonic Baseline (Low-End Hum Alert)</option>
+                                    <option value="15">16. Solar Flare (Exponential Pitch Climb)</option>
+                                    <option value="16">17. Prism Reflections (Triad Minor Chord)</option>
+                                    <option value="17">18. Data Stream Echo (Rapid Laser Blasts)</option>
+                                    <option value="18">19. Nebula Sweep (Phased Soft Pass)</option>
+                                    <option value="19">20. Gravity Well Ping (Resonant Sinkhole Tone)</option>
+                                    <option value="20">21. Palomita Outro (Final Descent Scale)</option>
+                                </select>
+                                <button class="settings-action-btn" onclick="previewRingtoneAudioNode()">Preview</button>
+                            </div>
+                        </div>
+
+                        <div class="settings-section-card">
+                            <h3>System Actions</h3>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <p style="font-size: 11px; color: #aaa;">Completely wipes the sandbox environment data cache and clears partition registry parameters.</p>
+                                <button class="settings-action-btn" style="width: 100%; background: #ff3b30; color: #fff;" onclick="executeSystemMemoryWipePurge()">Wipe System Memory</button>
+                            </div>
+                        </div>
+
+                        <div class="settings-section-card">
+                            <h3>Wallpaper System Matrix</h3>
+                            <div class="settings-grid-thumbs">
+                                <div class="thumb-wallpaper-node selected" id="wp0" style="background-image: linear-gradient(135deg, #7a00ff 0%, #00e5ff 100%);" onclick="applySystemWallpaperSelection(0)"></div>
+                                <div class="thumb-wallpaper-node" id="wp1" style="background-image: linear-gradient(135deg, #ff9500 0%, #ff3b30 100%);" onclick="applySystemWallpaperSelection(1)"></div>
+                                <div class="thumb-wallpaper-node" id="wp2" style="background-image: linear-gradient(135deg, #4cd964 0%, #007aff 100%);" onclick="applySystemWallpaperSelection(2)"></div>
+                                <div class="thumb-wallpaper-node" id="wp3" style="background-image: linear-gradient(135deg, #212529 0%, #343a40 100%);" onclick="applySystemWallpaperSelection(3)"></div>
+                                <div class="thumb-wallpaper-node" id="wp4" style="background-image: linear-gradient(135deg, #ff007f 0%, #7f00ff 100%);" onclick="applySystemWallpaperSelection(4)"></div>
+                                <div class="thumb-wallpaper-node" id="wp5" style="background-image: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);" onclick="applySystemWallpaperSelection(5)"></div>
+                                <div class="thumb-wallpaper-node" id="wp6" style="background-image: linear-gradient(135deg, #f857a6 0%, #ff5858 100%);" onclick="applySystemWallpaperSelection(6)"></div>
+                                <div class="thumb-wallpaper-node" id="wp7" style="background-image: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);" onclick="applySystemWallpaperSelection(7)"></div>
+                                <div class="thumb-wallpaper-node" id="wp8" style="background-image: linear-gradient(135deg, #ff9966 0%, #ff5e62 100%);" onclick="applySystemWallpaperSelection(8)"></div>
+                                <div class="thumb-wallpaper-node" id="wp9" style="background-image: linear-gradient(135deg, #4ea1d3 0%, #e85a4f 100%);" onclick="applySystemWallpaperSelection(9)"></div>
+                                <div class="thumb-wallpaper-node" id="wp10" style="background-image: linear-gradient(135deg, #bc4e9c 0%, #f9d423 100%);" onclick="applySystemWallpaperSelection(10)"></div>
+                                <div class="thumb-wallpaper-node" id="wp11" style="background-image: linear-gradient(135deg, #3a7bd5 0%, #3a6073 100%);" onclick="applySystemWallpaperSelection(11)"></div>
+                                <div class="thumb-wallpaper-node" id="wp12" style="background-image: linear-gradient(135deg, #02aab0 0%, #00cdac 100%);" onclick="applySystemWallpaperSelection(12)"></div>
+                                <div class="thumb-wallpaper-node" id="wp13" style="background-image: linear-gradient(135deg, #da22ff 0%, #9733ee 100%);" onclick="applySystemWallpaperSelection(13)"></div>
+                                <div class="thumb-wallpaper-node" id="wp14" style="background-image: linear-gradient(135deg, #e1eec3 0%, #f05053 100%);" onclick="applySystemWallpaperSelection(14)"></div>
+                                <div class="thumb-wallpaper-node" id="wp15" style="background-image: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);" onclick="applySystemWallpaperSelection(15)"></div>
+                                <div class="thumb-wallpaper-node" id="wp16" style="background-image: linear-gradient(135deg, #f12711 0%, #f5af19 100%);" onclick="applySystemWallpaperSelection(16)"></div>
+                                <div class="thumb-wallpaper-node" id="wp17" style="background-image: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);" onclick="applySystemWallpaperSelection(17)"></div>
+                                <div class="thumb-wallpaper-node" id="wp18" style="background-image: linear-gradient(135deg, #8a2387 0%, #e94057 100%);" onclick="applySystemWallpaperSelection(18)"></div>
+                                <div class="thumb-wallpaper-node" id="wp19" style="background-image: linear-gradient(135deg, #000000 0%, #434343 100%);" onclick="applySystemWallpaperSelection(19)"></div>
+                                <div class="thumb-wallpaper-node" id="wp20" style="background-image: linear-gradient(135deg, #ed4264 0%, #ffedbc 100%);" onclick="applySystemWallpaperSelection(20)"></div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="classic-five-navbar">
+                <div class="nav-btn-node" onclick="openModalApp('appModalPhone')"><i class="fas fa-phone-alt"></i></div>
+                <div class="nav-btn-node active" onclick="triggerHomeReturnRoute()"><i class="fas fa-home"></i></div>
+                <div class="nav-btn-node" onclick="openSystemControlMenu()"><i class="fas fa-bars"></i></div>
+                <div class="nav-btn-node" onclick="triggerHardwareBackKey()"><i class="fas fa-chevron-left"></i></div>
+                <div class="nav-btn-node power-btn" onclick="handleDockPowerButtonAction()"><i class="fas fa-power-off"></i></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isDeviceLoaded = false;
+        let isSystemShutDown = false;
+        let scoreCount = 0;
+        let audioCtx = null;
+        let lastLaunchedModalId = null;
+        let currentlySelectedWallpaperIndex = 0;
+
+        // Recovery Menu Navigation Registers
+        let isRecoveryModeActive = false;
+        let currentRecoverySelectedIdx = 0;
+        const totalRecoveryOptionsCount = 3;
+
+        // Clock Format Configurations
+        let is12HourClockFormatActive = localStorage.getItem('palomita_12hr') === 'true';
+
+        // Ringback loops
+        let currentRingtoneSelectionIndex = parseInt(localStorage.getItem('palomita_ringtone_idx')) || 0;
+        let ringbackTimelineTimer = null;
+        let callTimeoutMechanism = null;
+
+        // Music Variables
+        let activeAudioInterval = null;
+        let activePlayingTrackIndex = null;
+
+        // Security Configurations
+        let devicePasswordValue = localStorage.getItem('palomita_pin');
+        let isPasswordConfigured = localStorage.getItem('palomita_configured') === 'true';
+        let currentLockscreenModeState = 'setup'; 
+        let temporaryLockInputBuffer = "";
+
+        // Gesture Variables for Swipe Lockscreen
+        let startY = 0;
+        let isSwiping = false;
+
+        const systemWallpaperGradients = [
+            "linear-gradient(135deg, #7a00ff 0%, #00e5ff 100%)",
+            "linear-gradient(135deg, #ff9500 0%, #ff3b30 100%)",
+            "linear-gradient(135deg, #4cd964 0%, #007aff 100%)",
+            "linear-gradient(135deg, #212529 0%, #343a40 100%)",
+            "linear-gradient(135deg, #ff007f 0%, #7f00ff 100%)",
+            "linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)",
+            "linear-gradient(135deg, #f857a6 0%, #ff5858 100%)",
+            "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)",
+            "linear-gradient(135deg, #ff9966 0%, #ff5e62 100%)",
+            "linear-gradient(135deg, #4ea1d3 0%, #e85a4f 100%)",
+            "linear-gradient(135deg, #bc4e9c 0%, #f9d423 100%)",
+            "linear-gradient(135deg, #3a7bd5 0%, #3a6073 100%)",
+            "linear-gradient(135deg, #02aab0 0%, #00cdac 100%)",
+            "linear-gradient(135deg, #da22ff 0%, #9733ee 100%)",
+            "linear-gradient(135deg, #e1eec3 0%, #f05053 100%)",
+            "linear-gradient(135deg, #00c6ff 0%, #0072ff 100%)",
+            "linear-gradient(135deg, #f12711 0%, #f5af19 100%)",
+            "linear-gradient(135deg, #56ab2f 0%, #a8e063 100%)",
+            "linear-gradient(135deg, #8a2387 0%, #e94057 100%)",
+            "linear-gradient(135deg, #000000 0%, #434343 100%)",
+            "linear-gradient(135deg, #ed4264 0%, #ffedbc 100%)"
+        ];
+
+        const artistTrackDatabase = [
+            { title: "Neon Skyline", artist: "Vector Void", baseFreq: 293.66, tempo: 150, pattern: [0, 4, 7, 11, 7, 4] },
+            { title: "Popcorn Dreams", artist: "MC Kernal", baseFreq: 329.63, tempo: 130, pattern: [0, 2, 4, 7, 9, 12] },
+            { title: "Sublunar Orbit", artist: "Nebula Pulse", baseFreq: 220.00, tempo: 180, pattern: [0, 3, 7, 10, 7, 3] },
+            { title: "Cyber Chime", artist: "Glitch Lord", baseFreq: 440.00, tempo: 120, pattern: [0, 5, 9, 14, 9, 5] }
+        ];
+
+        const audioFrequencyChart = [
+            { type: 'sine',     notes: [880.00, 1046.50, 1318.51, 1567.98] }, 
+            { type: 'sine',     notes: [392.00, 440.00, 493.88, 587.33] },   
+            { type: 'sawtooth', notes: [587.33, 293.66, 587.33, 293.66] },   
+            { type: 'sine',     notes: [1760.00, 1318.51, 987.77, 880.00] }, 
+            { type: 'sawtooth', notes: [440.00, 659.25, 440.00, 659.25] },   
+            { type: 'triangle', notes: [2500.00, 2500.00, 2500.00, 2500.00] },
+            { type: 'square',   notes: [261.63, 329.63, 392.00, 523.25] },   
+            { type: 'triangle', notes: [110.00, 146.83, 164.81, 110.00] },   
+            { type: 'sine',     notes: [261.63, 392.00, 523.25, 783.99] },   
+            { type: 'triangle', notes: [1174.66, 1244.51, 1174.66, 880.00] },
+            { type: 'square',   notes: [880.00, 220.00, 880.00, 220.00] },   
+            { type: 'sawtooth', notes: [466.16, 493.88, 523.25, 554.37] },   
+            { type: 'sine',     notes: [987.77, 880.00, 783.99, 698.46] },   
+            { type: 'square',   notes: [150.00, 150.00, 300.00, 300.00] },   
+            { type: 'sine',     notes: [65.41, 73.42, 82.41, 65.41] },       
+            { type: 'sawtooth', notes: [220.00, 440.00, 880.00, 1760.00] },  
+            { type: 'sine',     notes: [349.23, 440.00, 523.25, 698.46] },   
+            { type: 'square',   notes: [1800.00, 1200.00, 1600.00, 900.00] }, 
+            { type: 'triangle', notes: [293.66, 381.99, 493.88, 622.25] },   
+            { type: 'sawtooth', notes: [440.00, 415.30, 392.00, 311.13] },   
+            { type: 'sine',     notes: [1046.50, 783.99, 659.25, 523.25] }    
+        ];
+
+        function initAudioEngineContext() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        /* HARDWARE DRIVEN INTERFACES */
+        function handleHardwareVolumeUp() {
+            initAudioEngineContext();
+            if (isRecoveryModeActive) {
+                currentRecoverySelectedIdx = (currentRecoverySelectedIdx - 1 + totalRecoveryOptionsCount) % totalRecoveryOptionsCount;
+                triggerHapticToneClick(750, 0.05);
+                renderRecoveryMenuSelectionHighlights();
+            } else {
+                triggerHapticToneClick(900, 0.04);
+                launchToastAlertNotification("Volume Level Increased");
+            }
+        }
+
+        function handleHardwareVolumeDown() {
+            initAudioEngineContext();
+            if (isRecoveryModeActive) {
+                currentRecoverySelectedIdx = (currentRecoverySelectedIdx + 1) % totalRecoveryOptionsCount;
+                triggerHapticToneClick(650, 0.05);
+                renderRecoveryMenuSelectionHighlights();
+            } else {
+                triggerHapticToneClick(700, 0.04);
+                launchToastAlertNotification("Volume Level Decreased");
+            }
+        }
+
+        /* DOCK POWER BUTTON COMBINATION INTERFACE */
+        function handleDockPowerButtonAction() {
+            initAudioEngineContext();
+            if (isRecoveryModeActive) {
+                executeRecoverySelectedFunction();
+            } else if (isDeviceLoaded && !isSystemShutDown) {
+                openSystemControlMenu();
+            } else if (isSystemShutDown) {
+                runSystemColdBootSequence();
+            }
+        }
+
+        function runSystemColdBootSequence() {
+            isSystemShutDown = false;
+            isRecoveryModeActive = false;
+            document.getElementById('recoveryMenuOverlay').style.display = "none";
+            
+            const panel = document.getElementById('bootPanelEngine');
+            const textNode = document.getElementById('bootLoadingStatusText');
+            const barNode = document.getElementById('bootProgressBarNode');
+            
+            panel.style.display = "flex";
+            panel.style.opacity = "1";
+            barNode.style.width = "0%";
+            textNode.innerText = "Initializing Core Hardware... 0%";
+
+            setTimeout(() => {
+                initAudioEngineContext();
+                triggerBootChimeAudio();
+            }, 150);
+
+            let currentPercentage = 0;
+            const statusMessages = [
+                "Staging partition mounts...",
+                "Allocating sandbox storage vectors...",
+                "Mounting graphics array matrices...",
+                "Syncing acoustic hardware parameters...",
+                "PalomitaOS Core v2.2.1 Ready!"
+            ];
+
+            let bootInterval = setInterval(() => {
+                currentPercentage += 4;
+                if (currentPercentage > 100) currentPercentage = 100;
+                
+                barNode.style.width = currentPercentage + "%";
+                let messageIndex = Math.min(Math.floor(currentPercentage / 25), statusMessages.length - 1);
+                textNode.innerText = `${statusMessages[messageIndex]} ${currentPercentage}%`;
+
+                if (currentPercentage >= 100) {
+                    clearInterval(bootInterval);
+                    setTimeout(() => {
+                        panel.style.opacity = '0';
+                        setTimeout(() => {
+                            panel.style.display = "none";
+                            launchSwipeLockscreenLayer();
+                        }, 500);
+                    }, 400);
+                }
+            }, 80);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('ringtoneListSelectorMenu').value = currentRingtoneSelectionIndex;
+            document.getElementById('clockFormatModeCheckbox').checked = is12HourClockFormatActive;
+            runSystemColdBootSequence();
+            buildMusicTracklistElements();
+        });
+
+        function launchSwipeLockscreenLayer() {
+            const swiper = document.getElementById('gestureSwipeScreenLayer');
+            swiper.style.display = "flex";
+            swiper.style.transform = "translateY(0)";
+            updateLockTimeDisplays();
+        }
+
+        const swiperNode = document.getElementById('gestureSwipeScreenLayer');
+        swiperNode.addEventListener('mousedown', (e) => { startY = e.clientY; isSwiping = true; });
+        swiperNode.addEventListener('mousemove', (e) => {
+            if (!isSwiping) return;
+            let diff = e.clientY - startY;
+            if (diff < 0) swiperNode.style.transform = `translateY(${diff}px)`;
+        });
+        window.addEventListener('mouseup', (e) => {
+            if (!isSwiping) return;
+            isSwiping = false;
+            let diff = e.clientY - startY;
+            if (diff < -100) { 
+                swiperNode.style.transform = "translateY(-100%)";
+                setTimeout(() => { swiperNode.style.display = "none"; evaluateSecurityBranchRouting(); }, 300);
+            } else {
+                swiperNode.style.transform = "translateY(0)";
+            }
+        });
+
+        // Touch Listeners
+        swiperNode.addEventListener('touchstart', (e) => { startY = e.touches[0].clientY; isSwiping = true; });
+        swiperNode.addEventListener('touchmove', (e) => {
+            if (!isSwiping) return;
+            let diff = e.touches[0].clientY - startY;
+            if (diff < 0) swiperNode.style.transform = `translateY(${diff}px)`;
+        });
+        swiperNode.addEventListener('touchend', (e) => {
+            if (!isSwiping) return;
+            isSwiping = false;
+            let diff = e.changedTouches[0].clientY - startY;
+            if (diff < -100) {
+                swiperNode.style.transform = "translateY(-100%)";
+                setTimeout(() => { swiperNode.style.display = "none"; evaluateSecurityBranchRouting(); }, 300);
+            } else {
+                swiperNode.style.transform = "translateY(0)";
+            }
+        });
+
+        function evaluateSecurityBranchRouting() {
+            if (!isPasswordConfigured) {
+                launchLockscreenMatrixMode('setup');
+            } else if (devicePasswordValue === null || devicePasswordValue === "none") {
+                bypassLockscreenIntoSystemDesktop();
+            } else {
+                launchLockscreenMatrixMode('verification');
+            }
+        }
+
+        function calculateFormattedTimeStrings() {
+            const t = new Date();
+            let h = t.getHours(), m = t.getMinutes();
+            let suffix = "";
+            
+            if (is12HourClockFormatActive) {
+                suffix = h >= 12 ? " PM" : " AM";
+                h = h % 12;
+                h = h ? h : 12; 
+            }
+            
+            h = h < 10 ? '0' + h : h; 
+            m = m < 10 ? '0' + m : m;
+            return { hour: h.toString(), minute: m.toString(), extension: suffix };
+        }
+
+        function updateLockTimeDisplays() {
+            const data = calculateFormattedTimeStrings();
+            document.getElementById('lockScreenClock').innerText = `${data.hour}:${data.minute}${data.extension}`;
+        }
+
+        function toggleClockLayoutFormat() {
+            is12HourClockFormatActive = document.getElementById('clockFormatModeCheckbox').checked;
+            localStorage.setItem('palomita_12hr', is12HourClockFormatActive);
+            launchToastAlertNotification(is12HourClockFormatActive ? "12-Hour Mode Active" : "24-Hour Mode Active");
+        }
+
+        setInterval(() => {
+            const timeData = calculateFormattedTimeStrings();
+            document.getElementById('topSystemClockLabel').innerText = `${timeData.hour}:${timeData.minute}${timeData.extension}`;
+            document.getElementById('htcClockHour').innerText = timeData.hour;
+            document.getElementById('htcClockMinute').innerText = timeData.minute;
+            document.getElementById('htcClockAmPmLabel').innerText = timeData.extension ? `Format Context:${timeData.extension}` : "Palomita Core v2.2.1";
+            
+            if(document.getElementById('gestureSwipeScreenLayer').style.display !== "none") {
+                updateLockTimeDisplays();
+            }
+        }, 500);
+
+        function launchLockscreenMatrixMode(mode) {
+            currentLockscreenModeState = mode;
+            temporaryLockInputBuffer = "";
+            document.getElementById('lockInputDisplay').innerText = "";
+            const layer = document.getElementById('deviceLockscreenLayer');
+            layer.style.display = "flex";
+
+            if (mode === 'setup') {
+                document.getElementById('lockScreenHeaderLabel').innerText = "Initialize Password Configuration";
+                document.getElementById('lockScreenSubtextLabel').innerText = "Type a secure pin below or proceed with unconfigured bypass.";
+                document.getElementById('noPasswordToggleBtn').style.display = "block";
+            } else {
+                document.getElementById('lockScreenHeaderLabel').innerText = "Device Protected";
+                document.getElementById('lockScreenSubtextLabel').innerText = "Enter passcode to unlock terminal workspace architecture.";
+                document.getElementById('noPasswordToggleBtn').style.display = "none";
+            }
+        }
+
+        function appendLockDigit(num) {
+            initAudioEngineContext();
+            triggerHapticToneClick(700, 0.03);
+            if (temporaryLockInputBuffer.length >= 8) return;
+            temporaryLockInputBuffer += num;
+            document.getElementById('lockInputDisplay').innerText = "*".repeat(temporaryLockInputBuffer.length);
+        }
+
+        function clearLockField() {
+            initAudioEngineContext();
+            triggerHapticToneClick(350, 0.08);
+            temporaryLockInputBuffer = "";
+            document.getElementById('lockInputDisplay').innerText = "";
+        }
+
+        function skipPasswordConfiguration() {
+            initAudioEngineContext();
+            triggerHapticToneClick(400, 0.05);
+            devicePasswordValue = "none";
+            isPasswordConfigured = true;
+            localStorage.setItem('palomita_pin', 'none');
+            localStorage.setItem('palomita_configured', 'true');
+            bypassLockscreenIntoSystemDesktop();
+            launchToastAlertNotification("No Password Route Saved");
+            updateSettingsSecurityUI();
+        }
+
+        function submitLockPasscodeSequence() {
+            initAudioEngineContext();
+            if (currentLockscreenModeState === 'setup') {
+                if (temporaryLockInputBuffer.length === 0) {
+                    launchToastAlertNotification("Please enter sequence digits");
+                    return;
+                }
+                devicePasswordValue = temporaryLockInputBuffer;
+                isPasswordConfigured = true;
+                localStorage.setItem('palomita_pin', devicePasswordValue);
+                localStorage.setItem('palomita_configured', 'true');
+                launchToastAlertNotification("Passcode Registration Saved");
+                bypassLockscreenIntoSystemDesktop();
+                updateSettingsSecurityUI();
+            } else {
+                if (temporaryLockInputBuffer === devicePasswordValue) {
+                    launchSystemSuccessSound();
+                    launchToastAlertNotification("Security Clearance Approved");
+                    bypassLockscreenIntoSystemDesktop();
+                } else {
+                    launchToastAlertNotification("Invalid Credentials Pin");
+                    clearLockField();
+                    triggerHapticToneClick(180, 0.25);
+                }
+            }
+        }
+
+        function bypassLockscreenIntoSystemDesktop() {
+            document.getElementById('deviceLockscreenLayer').style.display = "none";
+            isDeviceLoaded = true;
+        }
+
+        function lockDeviceManually() {
+            closeControlOverlay();
+            isDeviceLoaded = false;
+            launchSwipeLockscreenLayer();
+        }
+
+        function resetPasswordFromSettings() {
+            closeAllOpenModals();
+            isDeviceLoaded = false;
+            isPasswordConfigured = false;
+            localStorage.removeItem('palomita_pin');
+            localStorage.removeItem('palomita_configured');
+            launchLockscreenMatrixMode('setup');
+        }
+
+        function updateSettingsSecurityUI() {
+            const label = document.getElementById('settingsSecurityStatusLabel');
+            if (devicePasswordValue === "none" || !devicePasswordValue) {
+                label.innerText = "Status: Unlocked (No Password chosen)";
+                label.style.color = "#ff9500";
+            } else {
+                label.innerText = "Status: Protected (PIN active)";
+                label.style.color = "#4cd964";
+            }
+        }
+
+        function triggerRecoveryTerminalBoot() {
+            initAudioEngineContext();
+            triggerHapticToneClick(220, 0.3);
+            closeAllOpenModals();
+            closeControlOverlay();
+            
+            isDeviceLoaded = false;
+            isRecoveryModeActive = true;
+            currentRecoverySelectedIdx = 0;
+            
+            document.getElementById('deviceLockscreenLayer').style.display = "none";
+            document.getElementById('gestureSwipeScreenLayer').style.display = "none";
+            document.getElementById('bootPanelEngine').style.display = "none";
+            
+            document.getElementById('recoveryMenuOverlay').style.display = "flex";
+            renderRecoveryMenuSelectionHighlights();
+        }
+
+        function renderRecoveryMenuSelectionHighlights() {
+            for (let i = 0; i < totalRecoveryOptionsCount; i++) {
+                const optElement = document.getElementById(`recOpt${i}`);
+                if (i === currentRecoverySelectedIdx) {
+                    optElement.classList.add('active-selection');
+                } else {
+                    optElement.classList.remove('active-selection');
+                }
+            }
+        }
+
+        function executeRecoverySelectedFunction() {
+            triggerHapticToneClick(800, 0.1);
+            if (currentRecoverySelectedIdx === 0) {
+                runSystemColdBootSequence();
+            } else if (currentRecoverySelectedIdx === 1) {
+                executeSystemMemoryWipePurge();
+            } else if (currentRecoverySelectedIdx === 2) {
+                localStorage.removeItem('palomita_pin');
+                localStorage.removeItem('palomita_configured');
+                devicePasswordValue = null;
+                isPasswordConfigured = false;
+                runSystemColdBootSequence();
+            }
+        }
+
+        function executeSystemMemoryWipePurge() {
+            localStorage.clear();
+            devicePasswordValue = null;
+            isPasswordConfigured = false;
+            is12HourClockFormatActive = false;
+            currentRingtoneSelectionIndex = 0;
+            scoreCount = 0;
+            currentlySelectedWallpaperIndex = 0;
+            
+            document.getElementById('systemDesktopInterface').style.background = systemWallpaperGradients[0];
+            document.getElementById('ringtoneListSelectorMenu').value = 0;
+            document.getElementById('clockFormatModeCheckbox').checked = false;
+            document.getElementById('kernelScoreBoardText').innerText = "Score: 0";
+            
+            if (audioCtx) triggerHapticToneClick(150, 0.5);
+            runSystemColdBootSequence();
+        }
+
+        function triggerSystemResetSequence(mode) {
+            closeControlOverlay();
+            isDeviceLoaded = false;
+            closeAllOpenModals();
+            stopMusicSynthesizerEngine();
+
+            if (mode === 'poweroff') {
+                isSystemShutDown = true;
+                document.getElementById('deviceLockscreenLayer').style.display = "none";
+                document.getElementById('gestureSwipeScreenLayer').style.display = "none";
+                const p = document.getElementById('bootPanelEngine');
+                p.style.display = "flex";
+                p.style.opacity = '1';
+                document.getElementById('bootLoadingStatusText').innerText = "Powering down system modules...";
+                setTimeout(() => { p.style.display = "none"; }, 1200);
+            } else if (mode === 'reboot') {
+                runSystemColdBootSequence();
+            }
+        }
+
+        function openModalApp(id) {
+            if (!isDeviceLoaded || isSystemShutDown || isRecoveryModeActive) return;
+            initAudioEngineContext();
+            triggerHapticToneClick(600, 0.03);
+            closeAllOpenModals();
+            document.getElementById(id).style.display = "flex";
+            lastLaunchedModalId = id;
+            if (id === 'appModalSettings') updateSettingsSecurityUI();
+        }
+
+        function closeActiveModal(id) {
+            initAudioEngineContext();
+            triggerHapticToneClick(400, 0.03);
+            document.getElementById(id).style.display = "none";
+            if (id === 'appModalPhone') terminateCurrentCallSequence();
+            if (lastLaunchedModalId === id) lastLaunchedModalId = null;
+        }
+
+        function closeAllOpenModals() {
+            document.querySelectorAll('.app-window-overlay').forEach(m => m.style.display = "none");
+        }
+
+        function triggerHomeReturnRoute() {
+            if (!isDeviceLoaded || isSystemShutDown || isRecoveryModeActive) return;
+            initAudioEngineContext();
+            triggerHapticToneClick(700, 0.04);
+            closeAllOpenModals();
+            closeControlOverlay();
+        }
+
+        function triggerHardwareBackKey() {
+            if (lastLaunchedModalId) closeActiveModal(lastLaunchedModalId);
+        }
+
+        function openSystemControlMenu() {
+            if (!isDeviceLoaded || isSystemShutDown || isRecoveryModeActive) return;
+            initAudioEngineContext();
+            document.getElementById('sysControlOverlay').style.display = "flex";
+        }
+
+        function closeControlOverlay() {
+            document.getElementById('sysControlOverlay').style.display = "none";
+        }
+
+        function appendDialDigit(v) {
+            initAudioEngineContext();
+            triggerHapticToneClick(900, 0.04);
+            document.getElementById('dialerTextDigits').innerText += v;
+        }
+
+        function clearDialField() {
+            initAudioEngineContext();
+            triggerHapticToneClick(350, 0.08);
+            document.getElementById('dialerTextDigits').innerText = "";
+        }
+
+        function executeDialedCallSequence() {
+            const digits = document.getElementById('dialerTextDigits').innerText;
+            if (!digits) {
+                launchToastAlertNotification("Please enter numbers to dial");
+                return;
+            }
+            initAudioEngineContext();
+            
+            document.getElementById('phoneAppPrimaryBody').style.display = "none";
+            const callScreen = document.getElementById('phoneActiveCallOverlay');
+            callScreen.style.display = "flex";
+            document.getElementById('activeCallTargetNumber').innerText = digits;
+            
+            const statusLabel = document.getElementById('activeCallStatusLabel');
+            statusLabel.innerText = "DIALING...";
+            statusLabel.style.color = "#ff9500";
+
+            executeSelectedRingtoneLoop();
+            const simulatedDelayWindow = (Math.floor(Math.random() * 5) + 2) * 1000;
+
+            callTimeoutMechanism = setTimeout(() => {
+                clearInterval(ringbackTimelineTimer);
+                ringbackTimelineTimer = null;
+                statusLabel.innerText = "CONNECTED";
+                statusLabel.style.color = "#4cd964";
+                launchSystemSuccessSound();
+                launchToastAlertNotification("Call Answered");
+            }, simulatedDelayWindow);
+        }
+
+        function executeSelectedRingtoneLoop() {
+            if (ringbackTimelineTimer) clearInterval(ringbackTimelineTimer);
+            playArpeggiatedRingtoneNode(currentRingtoneSelectionIndex);
+            ringbackTimelineTimer = setInterval(() => {
+                playArpeggiatedRingtoneNode(currentRingtoneSelectionIndex);
+            }, 2000);
+        }
+
+        function terminateCurrentCallSequence() {
+            if (ringbackTimelineTimer) { clearInterval(ringbackTimelineTimer); ringbackTimelineTimer = null; }
+            if (callTimeoutMechanism) { clearTimeout(callTimeoutMechanism); callTimeoutMechanism = null; }
+            document.getElementById('phoneActiveCallOverlay').style.display = "none";
+            document.getElementById('phoneAppPrimaryBody').style.display = "flex";
+            clearDialField();
+            launchToastAlertNotification("Call Terminated");
+            triggerHapticToneClick(220, 0.15);
+        }
+
+        function triggerIncomingChimeAlert() {
+            launchToastAlertNotification("Incoming Signal Active");
+            previewRingtoneAudioNode();
+        }
+
+        function launchLiveWebQuery() {
+            let url = document.getElementById('browserUrlField').value.trim();
+            if(!url.startsWith('http://') && !url.startsWith('https://')) {
+                url = 'https://' + url;
+            }
+            document.getElementById('browserUrlField').value = url;
+            document.getElementById('liveBrowserIframe').src = url;
+            launchToastAlertNotification("Navigating to target web host...");
+        }
+
+        function buildMusicTracklistElements() {
+            const container = document.getElementById('musicSystemTracklistContainer');
+            container.innerHTML = "";
+            artistTrackDatabase.forEach((track, index) => {
+                const row = document.createElement('div');
+                row.className = "music-track-item";
+                row.id = `musicTrackRow${index}`;
+                row.onclick = () => playSelectedTrackNode(index);
+                row.innerHTML = `
+                    <div>
+                        <h4 style="font-size:13px;">${track.title}</h4>
+                        <p style="font-size:11px; color:#ff2d55;">${track.artist}</p>
+                    </div>
+                    <i class="fas fa-play" style="font-size:12px; color:#ff2d55;"></i>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function playSelectedTrackNode(index) {
+            initAudioEngineContext();
+            stopMusicSynthesizerEngine();
+            
+            activePlayingTrackIndex = index;
+            const track = artistTrackDatabase[index];
+            
+            document.getElementById('currentPlayingTrackTitle').innerText = track.title;
+            document.getElementById('currentPlayingTrackArtist').innerText = track.artist;
+            document.getElementById('musicPlayerVinylDisc').style.animationPlayState = "running";
+            
+            document.querySelectorAll('.music-track-item').forEach(el => el.classList.remove('playing'));
+            document.getElementById(`musicTrackRow${index}`).classList.add('playing');
+            
+            let beatStep = 0;
+            const stepDuration = 60000 / track.tempo / 2;
+            
+            activeAudioInterval = setInterval(() => {
+                if (!audioCtx) return;
+                let patternNote = track.pattern[beatStep % track.pattern.length];
+                let calculatedFreq = track.baseFreq * Math.pow(2, patternNote / 12);
+                
+                let osc = audioCtx.createOscillator();
+                let gainNode = audioCtx.createGain();
+                
+                osc.type = (beatStep % 4 === 0) ? 'triangle' : 'sine';
+                osc.frequency.setValueAtTime(calculatedFreq, audioCtx.currentTime);
+                
+                gainNode.gain.setValueAtTime(0.06, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (stepDuration / 1000) * 0.9);
+                
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + (stepDuration / 1000));
+                
+                beatStep++;
+            }, stepDuration);
+            
+            launchToastAlertNotification(`Playing: ${track.title}`);
+        }
+
+        function stopMusicSynthesizerEngine() {
+            if(activeAudioInterval) { clearInterval(activeAudioInterval); activeAudioInterval = null; }
+            document.getElementById('musicPlayerVinylDisc').style.animationPlayState = "paused";
+        }
+
+        function simulateAppStoreInstallation(appName, buttonId) {
+            initAudioEngineContext();
+            triggerHapticToneClick(600, 0.05);
+            const btn = document.getElementById(buttonId);
+            btn.innerText = "Installing...";
+            btn.disabled = true;
+            
+            setTimeout(() => {
+                btn.innerText = "Open";
+                btn.className = "store-download-btn installed";
+                launchSystemSuccessSound();
+                launchToastAlertNotification(`${appName} integrated into desktop core!`);
+                
+                const grid = document.querySelector('.app-grid-row');
+                const newApp = document.createElement('div');
+                newApp.className = "app-node-element";
+                
+                let iconClass = appName === 'Calc' ? 'fas fa-calculator' : 'fas fa-gamepad';
+                let gradientClass = appName === 'Calc' ? 'linear-gradient(135deg,#ff9500,#ff5e00)' : 'linear-gradient(135deg,#af52de,#7a00ff)';
+                
+                newApp.innerHTML = `
+                    <div class="app-icon-plate" style="background:${gradientClass}"><i class="${iconClass}"></i></div>
+                    <span class="app-text-title">${appName}</span>
+                `;
+                newApp.onclick = () => { launchToastAlertNotification(`Launching virtual package: ${appName}`); };
+                grid.appendChild(newApp);
+            }, 2000);
+        }
+
+        function executeChatMessageRoute() {
+            const i = document.getElementById('chatInputMessageNode');
+            if (!i.value.trim()) return;
+            createChatBubbleElement(i.value, 'user');
+            i.value = "";
+            setTimeout(() => { 
+                triggerHapticToneClick(880, 0.05);
+                createChatBubbleElement("Array loop verification operational.", 'bot'); 
+            }, 600);
+        }
+
+        function createChatBubbleElement(t, c) {
+            const f = document.getElementById('chatTimelineFlow');
+            const b = document.createElement('div');
+            b.className = `chat-bubble ${c}`; b.innerText = t;
+            f.appendChild(b); f.scrollTop = f.scrollHeight;
+        }
+
+        function incrementKernelCounterScore() {
+            initAudioEngineContext();
+            scoreCount++;
+            document.getElementById('kernelScoreBoardText').innerText = `Score: ${scoreCount}`;
+            triggerHapticToneClick(400 + (Math.random() * 400), 0.03);
+        }
+
+        function runSecurityCoreDiagnosticsCheck() {
+            const l = document.getElementById('virusTerminalOutputLog');
+            l.innerHTML = "Scanning vectors...<br>";
+            setTimeout(() => { 
+                launchSystemSuccessSound();
+                l.innerHTML += "<span style='color:#34c759;'>Status: Shield Secure</span>"; 
+            }, 800);
+        }
+
+        function triggerHapticToneClick(freq, duration) {
+            if (!audioCtx) return;
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function launchSystemSuccessSound() {
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+            [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => {
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+                osc.frequency.setValueAtTime(f, now + (i * 0.06));
+                gain.gain.setValueAtTime(0.04, now + (i * 0.06));
+                gain.gain.exponentialRampToValueAtTime(0.001, now + (i * 0.06) + 0.15);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(now + (i * 0.06)); osc.stop(now + (i * 0.06) + 0.16);
+            });
+        }
+
+        function triggerBootChimeAudio() {
+            if (!audioCtx) return;
+            const bootNotes = [329.63, 392.00, 523.25, 659.25, 987.77]; 
+            const startTime = audioCtx.currentTime;
+            
+            bootNotes.forEach((freq, idx) => {
+                let osc = audioCtx.createOscillator();
+                let gainNode = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, startTime + (idx * 0.1));
+                gainNode.gain.setValueAtTime(0, startTime);
+                gainNode.gain.linearRampToValueAtTime(0.04, startTime + (idx * 0.1) + 0.04);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 1.0);
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                osc.start(startTime + (idx * 0.1));
+                osc.stop(startTime + 1.1);
+            });
+        }
+
+        function saveRingtoneSelection() {
+            currentRingtoneSelectionIndex = parseInt(document.getElementById('ringtoneListSelectorMenu').value);
+            localStorage.setItem('palomita_ringtone_idx', currentRingtoneSelectionIndex);
+        }
+
+        function playArpeggiatedRingtoneNode(id) {
+            if (!audioCtx) return;
+            const config = audioFrequencyChart[id];
+            if (!config) return;
+            
+            config.notes.forEach((freq, idx) => {
+                setTimeout(() => {
+                    let osc = audioCtx.createOscillator();
+                    let nodeGain = audioCtx.createGain();
+                    
+                    osc.type = config.type;
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                    
+                    let volumeMultiplier = (config.type === 'square' || config.type === 'sawtooth') ? 0.012 : 0.04;
+                    
+                    nodeGain.gain.setValueAtTime(volumeMultiplier, audioCtx.currentTime);
+                    nodeGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.22);
+                    
+                    osc.connect(nodeGain); 
+                    nodeGain.connect(audioCtx.destination);
+                    
+                    osc.start(); 
+                    osc.stop(audioCtx.currentTime + 0.25);
+                }, idx * 170);
+            });
+        }
+
+        function previewRingtoneAudioNode() {
+            initAudioEngineContext();
+            const previewTargetId = parseInt(document.getElementById('ringtoneListSelectorMenu').value);
+            playArpeggiatedRingtoneNode(previewTargetId);
+        }
+
+        function runAdaptiveAudioThemeSync() {
+            initAudioEngineContext();
+            if (!audioCtx) return;
+            const baseMultiplier = (currentlySelectedWallpaperIndex + 1) * 35;
+            const chimes = [220 + baseMultiplier, 330 + baseMultiplier, 440 + baseMultiplier];
+            chimes.forEach((freq, idx) => {
+                setTimeout(() => {
+                    let osc = audioCtx.createOscillator();
+                    let nodeGain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                    nodeGain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                    nodeGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+                    osc.connect(nodeGain); nodeGain.connect(audioCtx.destination);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.35);
+                }, idx * 140);
+            });
+            launchToastAlertNotification("Acoustic Profile Matched to Theme");
+        }
+
+        function applySystemWallpaperSelection(idx) {
+            initAudioEngineContext();
+            triggerHapticToneClick(500, 0.04);
+            currentlySelectedWallpaperIndex = idx;
+            document.getElementById('systemDesktopInterface').style.background = systemWallpaperGradients[idx];
+            document.querySelectorAll('.thumb-wallpaper-node').forEach(n => n.classList.remove('selected'));
+            document.getElementById(`wp${idx}`).classList.add('selected');
+            launchToastAlertNotification(`Wallpaper updated to option ${idx + 1}`);
+        }
+
+        function launchToastAlertNotification(msg) {
+            const b = document.getElementById('globalToastBanner');
+            document.getElementById('toastBannerMessage').innerText = msg;
+            b.style.display = "block";
+            setTimeout(() => { b.style.display = "none"; }, 2500);
+        }
+    </script>
+</body>
+</html>
